@@ -52,7 +52,7 @@ object Log2Hudi {
     val metaEventSample = ss.read.json(Seq(Meta.getMetaJsonFromSample(parmas.jsonMetaSample)).toDS())
     val metaEventSchema = metaEventSample.schema
     val msb = ss.sparkContext.broadcast(metaEventSchema)
-    val parb = ss.sparkContext.broadcast((parmas.partitionNum, parmas.partitionFormat))
+//    val parb = ss.sparkContext.broadcast((parmas.partitionNum, parmas.partitionFormat))
     // Kafka value
     val ds = df.selectExpr("CAST(value AS STRING)").as[String]
     val query = ds

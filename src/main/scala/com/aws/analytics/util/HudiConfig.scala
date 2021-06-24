@@ -39,6 +39,7 @@ object HudiConfig {
     props.put("hoodie.datasource.hive_sync.jdbcurl", params.syncJDBCUrl)
     props.put("hoodie.datasource.hive_sync.partition_extractor_class", "org.apache.hudi.hive.MultiPartKeysValueExtractor")
     props.put("hoodie.datasource.hive_sync.username", params.syncJDBCUsername)
+    props.put("hoodie.datasource.write.payload.class","org.apache.hudi.common.model.DefaultHoodieRecordPayload")
 
     props
 
