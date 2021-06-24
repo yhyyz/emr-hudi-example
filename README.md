@@ -2,11 +2,11 @@
 
 #### 一、程序说明
 
-Spark Structured Streaming Kafka消费JSON数据，通过from_json方式解析动态生成schema, 之后数据直接写入Hudi表，Schema同步到Hive。[源码地址]()
+Spark Structured Streaming Kafka消费JSON数据，通过from_json方式解析动态生成schema, 之后数据直接写入Hudi表，Schema同步到Hive。[源码地址](https://github.com/yhyyz/emr-hudi-example)
 
 #### 二、数据生成
 
-使用json-data-generator生成数据，[点击GitHub](https://github.com/everwatchsolutions/json-data-generator)
+使用json-data-generator生成数据，[点击GitHub](https://github.com/everwatchsolutions/json-data-generator) ,直接下载release解压使用即可
 
 ```json
 # 一般配置如下，先配置job. 比如下面配置一个 test-hudi.json 
