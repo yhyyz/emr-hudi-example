@@ -3,12 +3,6 @@ package com.aws.analytics.util
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 
-/**
-  * @constructor 根据环境变量参数创建Spark Session
-  * @author QF
-  * @date 2020/6/9 2:59 PM
-  * @version V1.0
-  */
 object SparkHelper {
 
 
