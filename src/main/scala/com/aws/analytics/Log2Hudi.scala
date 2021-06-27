@@ -58,7 +58,7 @@ object Log2Hudi {
     val query = ds
       .writeStream
       .queryName("action2hudi")
-      .option("checkpointLocation", parmas.checkpointDir + "/action/")
+      .option("checkpointLocation", parmas.checkpointDir)
       // if set 0, as fast as possible
       .trigger(Trigger.ProcessingTime(parmas.trigger + " seconds"))
       .foreachBatch { (batchDF: Dataset[String], batchId: Long) =>

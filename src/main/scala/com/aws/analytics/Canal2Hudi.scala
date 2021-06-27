@@ -4,14 +4,13 @@ import com.aws.analytics.cdc.CanalParser
 import com.aws.analytics.cdc.const.HudiOP
 import com.aws.analytics.cdc.util.JsonUtil
 import com.aws.analytics.conf.{Config, TableInfo}
-import com.aws.analytics.util.{HudiConfig, HudiWriteTask, HudiWriteThread, Meta, SparkHelper}
+import com.aws.analytics.util.{HudiConfig, HudiWriteTask, Meta, SparkHelper}
 import net.heartsavior.spark.KafkaOffsetCommitterListener
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.{Dataset, SaveMode}
 import org.apache.spark.sql.functions.{col, date_format, explode, from_json, lit, udf}
 import org.apache.spark.sql.streaming.{StreamingQueryListener, Trigger}
 import org.slf4j.LoggerFactory
-
 import java.util.concurrent.Executors
 import scala.concurrent.duration.{Duration, MINUTES}
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -53,19 +52,22 @@ object Canal2Hudi{
 
     val listener = new KafkaOffsetCommitterListener()
     ss.streams.addListener(listener)
+
     val pool = Executors.newFixedThreadPool(2)
     implicit val xc = ExecutionContext.fromExecutor(pool)
+
     val partitionFormat: (String => String) = (arg: String) => {
       val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
       val parFormatter = DateTimeFormatter.ofPattern("yyyyMM")
       parFormatter.format(formatter.parse(arg))
     }
-    val partitionFunc = udf(partitionFormat)
+    val sqlPartitionFunc = udf(partitionFormat)
+
     val ds = df.selectExpr("CAST(value AS STRING)").as[String]
     val query = ds
       .writeStream
-      .queryName("action2hudi")
-      .option("checkpointLocation", params.checkpointDir + "/action/")
+      .queryName("canal2hudi")
+      .option("checkpointLocation", params.checkpointDir)
       // if set 0, as fast as possible
       .trigger(Trigger.ProcessingTime(params.trigger + " seconds"))
       .foreachBatch { (batchDF: Dataset[String], batchId: Long) =>
@@ -81,11 +83,10 @@ object Canal2Hudi{
               .filter($"operationType" === HudiOP.UPSERT || $"operationType" === HudiOP.INSERT)
               .select(explode($"data").as("jsonData"))
             val json_schema = ss.read.json(insertORUpsertDF.select("jsonData").as[String]).schema
-            val resDF = insertORUpsertDF.select(from_json($"jsonData", json_schema).as("cdc_data"))
-            val r1 = resDF.select($"cdc_data.*")
-              .withColumn(tableInfo.hudiPartitionField,partitionFunc(col(tableInfo.partitionTimeColumn)))
-            r1.show(false)
-           val runTask =  HudiWriteTask.run(r1,params,tableInfo)(xc)
+            val cdcDF = insertORUpsertDF.select(from_json($"jsonData", json_schema).as("cdc_data"))
+            val cdcPartitionDF = cdcDF.select($"cdc_data.*")
+              .withColumn(tableInfo.hudiPartitionField,sqlPartitionFunc(col(tableInfo.partitionTimeColumn)))
+           val runTask =  HudiWriteTask.run(cdcPartitionDF,params,tableInfo)(xc)
             tasks :+ runTask
           }
            Await.result(Future.sequence(tasks),Duration(60,MINUTES))
