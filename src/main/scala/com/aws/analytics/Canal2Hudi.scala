@@ -71,14 +71,12 @@ object Canal2Hudi{
       // if set 0, as fast as possible
       .trigger(Trigger.ProcessingTime(params.trigger + " seconds"))
       .foreachBatch { (batchDF: Dataset[String], batchId: Long) =>
-        val newsDF = batchDF
+        val newsDF = batchDF.map(cdc=>CanalParser.apply().canal2Hudi(cdc))
           .filter(_ != null)
         if (!newsDF.isEmpty) {
-          val hudiModelDF = newsDF.map(cdc=>CanalParser.apply().canal2Hudi(cdc))
           val tasks = Seq[Future[Unit]]()
-          println(tableInfoList.tableInfo)
           for (tableInfo <- tableInfoList.tableInfo){
-            val insertORUpsertDF = hudiModelDF
+            val insertORUpsertDF = newsDF
               .filter($"database"===tableInfo.database && $"table" === tableInfo.table)
               .filter($"operationType" === HudiOP.UPSERT || $"operationType" === HudiOP.INSERT)
               .select(explode($"data").as("jsonData"))

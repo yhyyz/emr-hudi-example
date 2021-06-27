@@ -1,10 +1,200 @@
+[toc]
+
 ### EMR Hudi Example
 
-#### 一、程序说明
+#### 一、程序
 
-Spark Structured Streaming Kafka消费JSON数据，通过from_json方式解析动态生成schema, 之后数据直接写入Hudi表，Schema同步到Hive。
+1. Log2Hudi程序 Spark Structured Streaming Kafka消费JSON数据，通过from_json方式解析动态生成schema, 之后数据直接写入Hudi表，Schema同步到Hive。
+2. Canal2Hudi 程序，消费canal发送到kafka中的cdc json格式数据写入到hudi，当前insert，upsert操作写入hudi，delete操作直接丢弃
 
-#### 二、数据生成
+#### 二、Canal2Hudi 
+
+##### 2.1 环境
+
+```markdown
+*  EMR 6.2.0 (spark 3.0.1 hudi 0.7.0)
+```
+
+##### 2.2 支持参数
+
+```properties
+# 编译 mvn clean package -Dscope.type=provided 
+
+Canal2Hudi 1.0
+Usage: spark ss Canal2Hudi [options]
+  -e, --env <value>        env: dev or prod
+  -b, --brokerList <value>
+                           kafka broker list,sep comma
+  -t, --sourceTopic <value>
+                           kafka topic
+  -p, --consumeGroup <value>
+                           kafka consumer group
+  -s, --syncHive <value>   whether sync hive，default:false
+  -o, --startPos <value>   kafka start pos latest or earliest,default latest
+  -m, --tableInfoJson <value>
+                           table info json str
+  -i, --trigger <value>    default 300 second,streaming trigger interval
+  -c, --checkpointDir <value>
+                           hdfs dir which used to save checkpoint
+  -g, --hudiEventBasePath <value>
+                           hudi event table hdfs base path
+  -y, --tableType <value>  hudi table type MOR or COW. default COW
+  -t, --morCompact <value>
+                           mor inline compact,default:true
+  -m, --inlineMax <value>  inline max compact,default:20
+  -r, --syncJDBCUrl <value>
+                           hive server2 jdbc, eg. jdbc:hive2://172.17.106.165:10000
+  -n, --syncJDBCUsername <value>
+                           hive server2 jdbc username, default: hive
+  -p, --partitionNum <value>
+                           repartition num,default 16
+  -w, --hudiWriteOperation <value>
+                           hudi write operation,default insert
+```
+
+##### 2.3 作业提交
+
+```shell
+# -m 参数，是json字符串，配置从canal发到kafka的数据中，哪些表写入hudi，写入hudi表的配置信息。database，table字段表示canal json中数据库和表，recordKey字段表示用哪个字段作为hudi recordKey,配置是mysql表的主键字段(暂不支持联合主键)，比如自增id。precombineKey字段表示以那个字段作为去重比较的字段，一般选择表示修改时间的字段。partitionTimeColumn表示用哪个时间字段作为分区字段，当前只支持mysql表中的timestamp类型字段。hudiPartitionField字段，是hudi分区字段的名称，当前是根据partitionTimeColumn中配置的字段格式化为yyyyMM以时间做作为分区。
+# 其他参数，参照上方参数说明
+spark-submit  --master yarn \
+--deploy-mode client \
+--driver-memory 1g \
+--executor-memory 1g \
+--executor-cores 2 \
+--num-executors  2 \
+--conf "spark.serializer=org.apache.spark.serializer.KryoSerializer" \
+--conf "spark.sql.hive.convertMetastoreParquet=false" \
+--jars  /home/hadoop/hudi-spark-bundle_2.12-0.7.0.jar,/usr/lib/spark/external/lib/spark-avro.jar \
+--class com.aws.analytics.Canal2Hudi /home/hadoop/emr-hudi-example-1.0-SNAPSHOT-jar-with-dependencies.jar \
+-e prod -b *******:9092 \
+-t cdc-01 -p cdc-group-01 -s true \
+-o latest \
+-i 10 -y cow -p 10 \
+-c s3://*****/spark-checkpoint/hudi-cdc-001/ \
+-g s3://****/hudi-cdc-001/ \
+-r jdbc:hive2://******:10000  \
+-n hadoop -w upsert  \
+-m "{\"tableInfo\":[{\"database\":\"cdc_test_db\",\"table\":\"test_tb_01\",\"recordKey\":\"id\",\"precombineKey\":\"modify_time\",\"partitionTimeColumn\":\"create_time\",\"hudiPartitionField\":\"year_month\"}]}" 
+```
+
+##### 2.4 cdc 数据样例
+
+```json
+# insert 
+{
+  "data": [
+    {
+      "id": "5",
+      "name": "xxx-04",
+      "create_time": "2021-06-27 14:20:25",
+      "modify_time": "2021-06-27 14:20:25"
+    }
+  ],
+  "database": "cdc_test_db",
+  "es": 1624803625000,
+  "id": 26,
+  "isDdl": false,
+  "mysqlType": {
+    "id": "int",
+    "name": "varchar(155)",
+    "create_time": "timestamp",
+    "modify_time": "timestamp"
+  },
+  "old": null,
+  "pkNames": [
+    "id"
+  ],
+  "sql": "",
+  "sqlType": {
+    "id": 4,
+    "name": 12,
+    "create_time": 93,
+    "modify_time": 93
+  },
+  "table": "test_tb_01",
+  "ts": 1624803625233,
+  "type": "INSERT"
+}
+# update
+{
+  "data": [
+    {
+      "id": "11",
+      "name": "yyy-10",
+      "create_time": "2021-06-27 14:33:12",
+      "modify_time": "2021-06-27 14:36:02"
+    }
+  ],
+  "database": "cdc_test_db",
+  "es": 1624804562000,
+  "id": 39,
+  "isDdl": false,
+  "mysqlType": {
+    "id": "int",
+    "name": "varchar(155)",
+    "create_time": "timestamp",
+    "modify_time": "timestamp"
+  },
+  "old": [
+    {
+      "name": "xxx-10",
+      "modify_time": "2021-06-27 14:33:12"
+    }
+  ],
+  "pkNames": [
+    "id"
+  ],
+  "sql": "",
+  "sqlType": {
+    "id": 4,
+    "name": 12,
+    "create_time": 93,
+    "modify_time": 93
+  },
+  "table": "test_tb_01",
+  "ts": 1624804562876,
+  "type": "UPDATE"
+}
+# delete
+{
+  "data": [
+    {
+      "id": "1",
+      "name": "myname",
+      "info": "pinfo"
+    }
+  ],
+  "database": "cdc_test_db",
+  "es": 1624802660000,
+  "id": 10,
+  "isDdl": false,
+  "mysqlType": {
+    "id": "INT unsigned",
+    "name": "varchar(255)",
+    "info": "varchar(255)"
+  },
+  "old": null,
+  "pkNames": [
+    "id"
+  ],
+  "sql": "",
+  "sqlType": {
+    "id": 4,
+    "name": 12,
+    "info": 12
+  },
+  "table": "test_03",
+  "ts": 1624802660458,
+  "type": "DELETE"
+}
+```
+
+
+
+#### 三、Log2Hudi
+
+##### 3.1、数据生成
 
 使用json-data-generator生成数据，[点击GitHub](https://github.com/everwatchsolutions/json-data-generator) ,直接下载release解压使用即可
 
@@ -54,7 +244,7 @@ Spark Structured Streaming Kafka消费JSON数据，通过from_json方式解析�
 java -jar json-data-generator-1.4.1.jar test-hudi.json
 ```
 
-#### 三、运行程序说明
+##### 3.2、运行程序说明
 
 * 编译
 
