@@ -38,3 +38,4 @@ build.log
 #  syntax: regexp
 #  ^\.pc/
 src/test/
+metastore_db/
