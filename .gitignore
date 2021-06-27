@@ -39,3 +39,4 @@ build.log
 #  ^\.pc/
 src/test/
 metastore_db/
+derby.log
