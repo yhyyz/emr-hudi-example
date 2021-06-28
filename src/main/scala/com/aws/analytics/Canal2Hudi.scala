@@ -80,15 +80,22 @@ object Canal2Hudi{
               .filter($"database"===tableInfo.database && $"table" === tableInfo.table)
               .filter($"operationType" === HudiOP.UPSERT || $"operationType" === HudiOP.INSERT)
               .select(explode($"data").as("jsonData"))
-            val json_schema = ss.read.json(insertORUpsertDF.select("jsonData").as[String]).schema
-            val cdcDF = insertORUpsertDF.select(from_json($"jsonData", json_schema).as("cdc_data"))
-            val cdcPartitionDF = cdcDF.select($"cdc_data.*")
-              .withColumn(tableInfo.hudiPartitionField,sqlPartitionFunc(col(tableInfo.partitionTimeColumn)))
-           val runTask =  HudiWriteTask.run(cdcPartitionDF,params,tableInfo)(xc)
-            tasks :+ runTask
+            if (!insertORUpsertDF.isEmpty) {
+//              insertORUpsertDF.show(false)
+              val json_schema = ss.read.json(insertORUpsertDF.select("jsonData").as[String]).schema
+              val cdcDF = insertORUpsertDF.select(from_json($"jsonData", json_schema).as("cdc_data"))
+
+              val cdcPartitionDF = cdcDF.select($"cdc_data.*")
+                .withColumn(tableInfo.hudiPartitionField, sqlPartitionFunc(col(tableInfo.partitionTimeColumn)))
+              val runTask = HudiWriteTask.run(cdcPartitionDF, params, tableInfo)(xc)
+              tasks :+ runTask
+//                HudiWriteTask.runSerial(cdcPartitionDF, params, tableInfo)
+            }
           }
-           Await.result(Future.sequence(tasks),Duration(60,MINUTES))
-           ()
+          if (tasks.nonEmpty ){
+            Await.result(Future.sequence(tasks),Duration(60,MINUTES))
+          }
+          ()
         }
       }.start()
     query.awaitTermination()
