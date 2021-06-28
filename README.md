@@ -70,7 +70,7 @@ spark-submit  --master yarn \
 -e prod -b *******:9092 \
 -t cdc-01 -p cdc-group-01 -s true \
 -o latest \
--i 10 -y cow -p 10 \
+-i 60 -y cow -p 10 \
 -c s3://*****/spark-checkpoint/hudi-cdc-001/ \
 -g s3://****/hudi-cdc-001/ \
 -r jdbc:hive2://******:10000  \
@@ -321,7 +321,7 @@ java -jar json-data-generator-1.4.1.jar test-hudi.json
   -e prod \
   -b b-3.common-003.tq0tqa.c3.kafka.ap-southeast-1.amazonaws.com:9092 \
   -o latest -t adx-01  -p hudi-consumer-test-group-01 \
-  -s true  -i 10 -y cow -p 10 \
+  -s true  -i 60 -y cow -p 10 \
   -c s3://application-poc/spark-checkpoint/hudi-test-dup-001/ \
   -g s3://app-util/hudi-test-dup-0001/ -s news \
   -u event_insert_dup_01 \

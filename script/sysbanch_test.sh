@@ -10,7 +10,7 @@ sysbench insert.lua \
     --mysql-user=admin --mysql-password=panchao0129#$  \
     --mysql-host=news-test.cszxtewro2cv.ap-southeast-1.rds.amazonaws.com \
     --mysql-db=cdc_test_db --report-interval=1 \
-    --events=500000 --time=0 --threads=10  --skip_trx=true run
+    --events=1000000 --time=0 --threads=10  --skip_trx=true run
 
 # 更新数据
 sysbench update.lua \

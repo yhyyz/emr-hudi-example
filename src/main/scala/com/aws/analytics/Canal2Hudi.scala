@@ -11,9 +11,10 @@ import org.apache.spark.sql.{Dataset, SaveMode}
 import org.apache.spark.sql.functions.{col, date_format, explode, from_json, lit, udf}
 import org.apache.spark.sql.streaming.{StreamingQueryListener, Trigger}
 import org.slf4j.LoggerFactory
+
 import java.util.concurrent.Executors
 import scala.concurrent.duration.{Duration, MINUTES}
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor, Future}
 import java.time.format.DateTimeFormatter
 object Canal2Hudi{
 
@@ -54,7 +55,7 @@ object Canal2Hudi{
     ss.streams.addListener(listener)
 
     val pool = Executors.newFixedThreadPool(2)
-    implicit val xc = ExecutionContext.fromExecutor(pool)
+    implicit val xc: ExecutionContextExecutor = ExecutionContext.fromExecutor(pool)
 
     val partitionFormat: (String => String) = (arg: String) => {
       val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
@@ -81,15 +82,15 @@ object Canal2Hudi{
               .filter($"operationType" === HudiOP.UPSERT || $"operationType" === HudiOP.INSERT)
               .select(explode($"data").as("jsonData"))
             if (!insertORUpsertDF.isEmpty) {
-//              insertORUpsertDF.show(false)
               val json_schema = ss.read.json(insertORUpsertDF.select("jsonData").as[String]).schema
               val cdcDF = insertORUpsertDF.select(from_json($"jsonData", json_schema).as("cdc_data"))
 
               val cdcPartitionDF = cdcDF.select($"cdc_data.*")
                 .withColumn(tableInfo.hudiPartitionField, sqlPartitionFunc(col(tableInfo.partitionTimeColumn)))
+
               val runTask = HudiWriteTask.run(cdcPartitionDF, params, tableInfo)(xc)
               tasks :+ runTask
-//                HudiWriteTask.runSerial(cdcPartitionDF, params, tableInfo)
+//              HudiWriteTask.runSerial(cdcPartitionDF, params, tableInfo)
             }
           }
           if (tasks.nonEmpty ){
