@@ -27,6 +27,7 @@ case class Config(
                    hudiWriteOperation:String = "insert" ,
                    hudiKeyField:String = "",
                    hudiPartition:String = "logday,hm",
+                   concurrent:String = "false"
                  )
 
 
@@ -55,6 +56,7 @@ object Config {
           opt[String]('n', "syncJDBCUsername").optional().action((x, config) => config.copy(syncJDBCUsername = x)).text("hive server2 jdbc username, default: hive")
           opt[String]('p', "partitionNum").optional().action((x, config) => config.copy(partitionNum = x)).text("repartition num,default 16")
           opt[String]('w', "hudiWriteOperation").optional().action((x, config) => config.copy(hudiWriteOperation = x)).text("hudi write operation,default insert")
+          opt[String]('u', "concurrent").optional().action((x, config) => config.copy(concurrent = x)).text("write multiple hudi table concurrent,default false")
 
         case "Log2Hudi" =>
           opt[String]('j', "jsonMetaSample").required().action((x, config) => config.copy(jsonMetaSample = x)).text("json meta sample")
