@@ -55,7 +55,7 @@ object Canal2Hudi {
     val listener = new KafkaOffsetCommitterListener()
     ss.streams.addListener(listener)
 
-    val pool = Executors.newFixedThreadPool(2)
+    val pool = Executors.newFixedThreadPool(50)
     implicit val xc: ExecutionContextExecutor = ExecutionContext.fromExecutor(pool)
 
     val partitionFormat: (String => String) = (arg: String) => {

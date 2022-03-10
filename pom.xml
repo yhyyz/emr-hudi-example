@@ -14,12 +14,12 @@
         <maven-scala-plugin.version>2.10.1</maven-scala-plugin.version>
         <scala-maven-plugin.version>3.2.0</scala-maven-plugin.version>
         <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
-        <spark.version>3.0.1</spark.version>
+<!--    <spark.version>3.0.1</spark.version>-->
+        <spark.version>3.1.2</spark.version>
         <scope.type>compile</scope.type>
         <scala.binary.version>2.12</scala.binary.version>
         <!--compile provided-->
     </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -41,8 +41,8 @@
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql-kafka-0-10_${scala.binary.version}</artifactId>
-            <version>${spark.version}</version>
+            <artifactId>spark-sql-kafka-0-10_2.12</artifactId>
+            <version>3.1.2</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -126,8 +126,8 @@
 
         <dependency>
             <groupId>org.apache.hudi</groupId>
-            <artifactId>hudi-spark-bundle_2.12</artifactId>
-            <version>0.7.0</version>
+            <artifactId>hudi-spark3-bundle_2.12</artifactId>
+            <version>0.10.0</version>
             <scope>${scope.type}</scope>
         </dependency>
 

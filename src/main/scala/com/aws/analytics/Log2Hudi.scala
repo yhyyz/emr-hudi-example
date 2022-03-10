@@ -3,7 +3,6 @@ package com.aws.analytics
 import com.aws.analytics.conf.Config
 import com.aws.analytics.util.{HudiConfig, Meta, SparkHelper}
 import net.heartsavior.spark.KafkaOffsetCommitterListener
-import org.apache.hudi.DataSourceWriteOptions
 import org.apache.hudi.config.{HoodieIndexConfig, HoodieWriteConfig}
 import org.apache.hudi.index.HoodieIndex
 import org.apache.log4j.{Level, Logger}

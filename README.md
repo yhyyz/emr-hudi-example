@@ -1,5 +1,7 @@
 [toc]
 
+#### 更新版本spark=3.1.2 hudi=0.10.0
+
 ### EMR Hudi Example
 
 #### 一、程序

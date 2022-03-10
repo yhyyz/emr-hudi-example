@@ -40,3 +40,4 @@ build.log
 src/test/
 metastore_db/
 derby.log
+.DS_Store
