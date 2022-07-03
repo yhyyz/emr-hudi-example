@@ -12,30 +12,76 @@
 3. Debezium2Hudi 程序，消费flink cdc或者debeizum发送的json格式数据写入到hudi，当前insert，upsert操作写入hudi，delete操作直接丢弃
 
 #### Latest Debezium2Hudi
+
+##### 参数说明
+```shell
+Debezium2Hudi 1.0
+Usage: spark ss Debezium2Hudi [options]
+
+  -e, --env <value>        env: dev or prod
+  -b, --brokerList <value>
+                           kafka broker list,sep comma
+  -t, --sourceTopic <value>
+                           kafka topic
+  -p, --consumeGroup <value>
+                           kafka consumer group
+  -s, --syncHive <value>   whether sync hive，default:false
+  -o, --startPos <value>   kafka start pos latest or earliest,default latest
+  -m, --tableInfoJson <value>
+                           table info json str
+  -i, --trigger <value>    default 300 second,streaming trigger interval
+  -c, --checkpointDir <value>
+                           hdfs dir which used to save checkpoint
+  -g, --hudiEventBasePath <value>
+                           hudi event table hdfs base path
+  -y, --tableType <value>  hudi table type MOR or COW. default COW
+  -t, --morCompact <value>
+                           mor inline compact,default:true
+  -m, --inlineMax <value>  inline max compact,default:20
+  -r, --syncJDBCUrl <value>
+                           hive server2 jdbc, eg. jdbc:hive2://172.17.106.165:10000
+  -n, --syncJDBCUsername <value>
+                           hive server2 jdbc username, default: hive
+  -p, --partitionNum <value>
+                           repartition num,default 16
+  -w, --hudiWriteOperation <value>
+                           hudi write operation,default insert
+  -u, --concurrent <value>
+                           write multiple hudi table concurrent,default false
+  -s, --syncMode <value>   sync mode,default jdbc
+  -z, --syncMetastore <value>
+                           hive metastore uri,default thrift://localhost:9083
+```
+
+
 ##### 作业提交命令
 ```shell
-# -m 参数，是json字符串，配置从canal发到kafka的数据中，哪些表写入hudi，写入hudi表的配置信息。database，table字段表示canal json中数据库和表，recordKey字段表示用哪个字段作为hudi recordKey,配置是mysql表的主键字段(暂不支持联合主键)，比如自增id。precombineKey字段表示以那个字段作为去重比较的字段，一般选择表示修改时间的字段。partitionTimeColumn表示用哪个时间字段作为分区字段，当前只支持mysql表中的timestamp类型字段。hudiPartitionField字段，是hudi分区字段的名称，当前是根据partitionTimeColumn中配置的字段格式化为yyyyMM以时间做作为分区。
-# 其他参数，参照上方参数说明
+# -m 参数，是json字符串，flink cdc或者debezium发到kafka的数据中，哪些表写入hudi，写入hudi表的配置信息。database，table字段表示canal json中数据库和表，recordKey字段表示用哪个字段作为hudi recordKey,配置是mysql表的主键字段(暂不支持联合主键)，比如自增id。precombineKey字段表示以那个字段作为去重比较的字段，一般选择表示修改时间的字段。partitionTimeColumn表示用哪个时间字段作为分区字段，当前只支持mysql表中的timestamp类型字段。hudiPartitionField字段，是hudi分区字段的名称，当前是根据partitionTimeColumn中配置的字段格式化为yyyyMM以时间做作为分区。
+# 其他参数，参照上方参数说明，下方指定使用hms同步元数据到glue catalog
 spark-submit  --master yarn \
 --deploy-mode client \
 --driver-memory 1g \
 --executor-memory 1g \
 --executor-cores 2 \
 --num-executors  2 \
+--conf "spark.dynamicAllocation.enabled=false" \
 --conf "spark.serializer=org.apache.spark.serializer.KryoSerializer" \
 --conf "spark.sql.hive.convertMetastoreParquet=false" \
---jars  /home/hadoop/hudi-spark-bundle_2.12-0.7.0.jar,/usr/lib/spark/external/lib/spark-avro.jar \
---class com.aws.analytics.Canal2Hudi /home/hadoop/emr-hudi-example-1.0-SNAPSHOT-jar-with-dependencies.jar \
--e prod -b *******:9092 \
--t cdc-01 -p cdc-group-01 -s true \
--o latest \
+--jars  /usr/lib/hudi/hudi-spark-bundle.jar,/usr/lib/spark/external/lib/spark-avro.jar \
+--class com.aws.analytics.Debezium2Hudi /home/hadoop/emr-hudi-example-1.0-SNAPSHOT-jar-with-dependencies.jar \
+-e prod -b b-2.common-004.5ybaio.c3.kafka.ap-southeast-1.amazonaws.com:9092 \
+-t cdc_topic_001 -p emr-cdc-group-02 -s true \
+-o earliest \
 -i 60 -y cow -p 10 \
--c s3://*****/spark-checkpoint/hudi-cdc-001/ \
--g s3://****/hudi-cdc-001/ \
--r jdbc:hive2://******:10000  \
+-c s3://app-util/spark-checkpoint/emr-hudi-cdc-005/ \
+-g s3://app-util/emr-hudi-cdc-005/ \
+-r jdbc:hive2://localhost:10000  \
 -n hadoop -w upsert  \
+-s hms \
 --concurrent false \
--m "{\"tableInfo\":[{\"database\":\"cdc_test_db\",\"table\":\"test_tb_01\",\"recordKey\":\"id\",\"precombineKey\":\"modify_time\",\"partitionTimeColumn\":\"create_time\",\"hudiPartitionField\":\"year_month\"},{\"database\":\"cdc_test_db\",\"table\":\"test_tb_02\",\"recordKey\":\"id\",\"precombineKey\":\"modify_time\",\"partitionTimeColumn\":\"create_time\",\"hudiPartitionField\":\"year_month\"}]}"
+-m "{\"tableInfo\":[{\"database\":\"test_db\",\"table\":\"user\",\"recordKey\":\"id\",\"precombineKey\":\"modify_time\",\"partitionTimeColumn\":\"create_time\",\"hudiPartitionField\":\"year_month\"},
+{\"database\":\"test_db\",\"table\":\"user_order\",\"recordKey\":\"id\",\"precombineKey\":\"modify_time\",\"partitionTimeColumn\":\"create_time\",\"hudiPartitionField\":\"year_month\"},{\"database\":\"test_db\",\"table\":\"product\",\"recordKey\":\"pid\",\"precombineKey\":\"modify_time\",\"partitionTimeColumn\":\"create_time\",\"hudiPartitionField\":\"year_month\"}]}"
+
 ```
 
 
