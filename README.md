@@ -1,6 +1,7 @@
 [toc]
 
-#### 更新版本spark=3.1.2 hudi=0.10.0
+#### 更新版本EMR-6.6.0 (spark=3.2.0 hudi=0.10.1) [2022-07-03]
+
 
 ### EMR Hudi Example
 
@@ -8,13 +9,42 @@
 
 1. Log2Hudi程序 Spark Structured Streaming Kafka消费JSON数据，通过from_json方式解析动态生成schema, 之后数据直接写入Hudi表，Schema同步到Hive。
 2. Canal2Hudi 程序，消费canal发送到kafka中的cdc json格式数据写入到hudi，当前insert，upsert操作写入hudi，delete操作直接丢弃
+3. Debezium2Hudi 程序，消费flink cdc或者debeizum发送的json格式数据写入到hudi，当前insert，upsert操作写入hudi，delete操作直接丢弃
+
+#### Latest Debezium2Hudi
+##### 作业提交命令
+```shell
+# -m 参数，是json字符串，配置从canal发到kafka的数据中，哪些表写入hudi，写入hudi表的配置信息。database，table字段表示canal json中数据库和表，recordKey字段表示用哪个字段作为hudi recordKey,配置是mysql表的主键字段(暂不支持联合主键)，比如自增id。precombineKey字段表示以那个字段作为去重比较的字段，一般选择表示修改时间的字段。partitionTimeColumn表示用哪个时间字段作为分区字段，当前只支持mysql表中的timestamp类型字段。hudiPartitionField字段，是hudi分区字段的名称，当前是根据partitionTimeColumn中配置的字段格式化为yyyyMM以时间做作为分区。
+# 其他参数，参照上方参数说明
+spark-submit  --master yarn \
+--deploy-mode client \
+--driver-memory 1g \
+--executor-memory 1g \
+--executor-cores 2 \
+--num-executors  2 \
+--conf "spark.serializer=org.apache.spark.serializer.KryoSerializer" \
+--conf "spark.sql.hive.convertMetastoreParquet=false" \
+--jars  /home/hadoop/hudi-spark-bundle_2.12-0.7.0.jar,/usr/lib/spark/external/lib/spark-avro.jar \
+--class com.aws.analytics.Canal2Hudi /home/hadoop/emr-hudi-example-1.0-SNAPSHOT-jar-with-dependencies.jar \
+-e prod -b *******:9092 \
+-t cdc-01 -p cdc-group-01 -s true \
+-o latest \
+-i 60 -y cow -p 10 \
+-c s3://*****/spark-checkpoint/hudi-cdc-001/ \
+-g s3://****/hudi-cdc-001/ \
+-r jdbc:hive2://******:10000  \
+-n hadoop -w upsert  \
+--concurrent false \
+-m "{\"tableInfo\":[{\"database\":\"cdc_test_db\",\"table\":\"test_tb_01\",\"recordKey\":\"id\",\"precombineKey\":\"modify_time\",\"partitionTimeColumn\":\"create_time\",\"hudiPartitionField\":\"year_month\"},{\"database\":\"cdc_test_db\",\"table\":\"test_tb_02\",\"recordKey\":\"id\",\"precombineKey\":\"modify_time\",\"partitionTimeColumn\":\"create_time\",\"hudiPartitionField\":\"year_month\"}]}"
+```
+
 
 #### 二、Canal2Hudi 
 
 ##### 2.1 环境
 
 ```markdown
-*  EMR 6.2.0 (spark 3.0.1 hudi 0.7.0)
+*  EMR 6.6.0 ((spark=3.2.0 hudi=0.10.1))
 ```
 
 ##### 2.2 支持参数
@@ -192,8 +222,6 @@ spark-submit  --master yarn \
   "type": "DELETE"
 }
 ```
-
-
 
 #### 三、Log2Hudi
 

@@ -13,7 +13,7 @@ object SparkHelper {
         val conf = new SparkConf()
           .setAppName("Log2Hudi")
           .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-          .set("spark.sql.hive.metastore.version", "2.3.0")
+          .set("spark.sql.hive.metastore.version", "2.3.9-amzn-1")
           .set("spark.sql.cbo.enabled", "true")
           .set("spark.hadoop.dfs.client.block.write.replace-datanode-on-failure.enable", "true")
           .set("spark.hadoop.dfs.client.block.write.replace-datanode-on-failure.policy", "NEVER")

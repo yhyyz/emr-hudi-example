@@ -59,7 +59,7 @@ object Debezium2Hudi {
     implicit val xc: ExecutionContextExecutor = ExecutionContext.fromExecutor(pool)
 
     val partitionFormat: (String => String) = (arg: String) => {
-      val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+      val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
       val parFormatter = DateTimeFormatter.ofPattern("yyyyMM")
       parFormatter.format(formatter.parse(arg))
     }
@@ -85,10 +85,8 @@ object Debezium2Hudi {
             if (!insertORUpsertDF.isEmpty) {
               val json_schema = ss.read.json(insertORUpsertDF.select("jsonData").as[String]).schema
               val cdcDF = insertORUpsertDF.select(from_json($"jsonData", json_schema).as("cdc_data"))
-
               val cdcPartitionDF = cdcDF.select($"cdc_data.*")
                 .withColumn(tableInfo.hudiPartitionField, sqlPartitionFunc(col(tableInfo.partitionTimeColumn)))
-
               params.concurrent match {
                 case "true" => {
                   val runTask = HudiWriteTask.run(cdcPartitionDF, params, tableInfo)(xc)
