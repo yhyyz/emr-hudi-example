@@ -14,12 +14,12 @@ object HudiWriteTask {
 
   def run(df: DataFrame, params: Config, tableInfo: TableInfo)(implicit xc: ExecutionContext): Future[Unit] = Future {
     val props = setHudiConfig(params, tableInfo)
-      df.write.format("org.apache.hudi")
-        .options(props)
-        //.option(HoodieIndexConfig.BLOOM_INDEX_UPDATE_PARTITION_PATH, "true")
-        .option(HoodieIndexConfig.INDEX_TYPE_PROP, HoodieIndex.IndexType.BLOOM.name())
-        .mode(SaveMode.Append)
-        .save(params.hudiEventBasePath + tableInfo.database + "/" + tableInfo.table + "/")
+    df.write.format("org.apache.hudi")
+      .options(props)
+      //.option(HoodieIndexConfig.BLOOM_INDEX_UPDATE_PARTITION_PATH, "true")
+      .option(HoodieIndexConfig.INDEX_TYPE_PROP, HoodieIndex.IndexType.BLOOM.name())
+      .mode(SaveMode.Append)
+      .save(params.hudiEventBasePath + tableInfo.database + "/" + tableInfo.table + "/")
   }
 
   def runSerial(df: DataFrame, params: Config, tableInfo: TableInfo): Unit = {
@@ -66,6 +66,8 @@ object HudiWriteTask {
     props.put("hoodie.upsert.shuffle.parallelism", "1")
     props.put("hoodie.datasource.hive_sync.database", tableInfo.database)
     props.put("hoodie.datasource.hive_sync.table", tableInfo.table)
+    props.put("hoodie.datasource.hive_sync.mode", params.syncMode)
+    props.put("hoodie.datasource.hive_sync.metastore.uris", params.syncMetastore)
     props.put("hoodie.datasource.hive_sync.partition_fields", tableInfo.hudiPartitionField)
     props.put("hoodie.datasource.hive_sync.jdbcurl", params.syncJDBCUrl)
     props.put("hoodie.datasource.hive_sync.partition_extractor_class", "org.apache.hudi.hive.MultiPartKeysValueExtractor")

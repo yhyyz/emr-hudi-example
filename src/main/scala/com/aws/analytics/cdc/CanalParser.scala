@@ -8,13 +8,13 @@ import org.slf4j.LoggerFactory
 class CanalParser {
 
   private val log = LoggerFactory.getLogger("CanalParser")
-  val canalOP2HudiOP = Map(CanalOP.INSERT->HudiOP.INSERT,
-    CanalOP.UPDATE->HudiOP.UPSERT,
-    CanalOP.DELETE->HudiOP.DELETE)
+  val canalOP2HudiOP = Map(CanalOP.INSERT -> HudiOP.INSERT,
+    CanalOP.UPDATE -> HudiOP.UPSERT,
+    CanalOP.DELETE -> HudiOP.DELETE)
 
-  val allowCanalOP = Set(CanalOP.INSERT,CanalOP.UPDATE,CanalOP.DELETE)
+  val allowCanalOP = Set(CanalOP.INSERT, CanalOP.UPDATE, CanalOP.DELETE)
 
-  def canal2Hudi(canalSourceData:String): HudiDataModel ={
+  def canal2Hudi(canalSourceData: String): HudiDataModel = {
     try {
       require(canalSourceData.nonEmpty, "canal data can not be null")
       val canalObject = JsonUtil.mapper.readValue(canalSourceData, classOf[CanalDataModel])
@@ -22,19 +22,21 @@ class CanalParser {
       require(canalObject.table.nonEmpty, "canal op type  can not be null ")
       if (!allowCanalOP.contains(canalObject.`type`) || canalObject.data == null || canalObject.isDdl) {
         null
-      }else{
+      } else {
         HudiDataModel(canalObject.database, canalObject.table, canalOP2HudiOP(canalObject.`type`),
           canalObject.data.map(x => JsonUtil.toJson(x)))
       }
-    }catch {
-      case e: Exception => log.error("parse canal json error",e);null
+    } catch {
+      case e: Exception => log.error("parse canal json error", e); null
     }
   }
 
 }
 
-object CanalParser{
-  def apply(): CanalParser = {new CanalParser}
+object CanalParser {
+  def apply(): CanalParser = {
+    new CanalParser
+  }
 
   def main(args: Array[String]): Unit = {
     val demoString =
@@ -71,7 +73,7 @@ object CanalParser{
       """
         |{"data":null,"database":"mysql","es":1624790516000,"id":10,"isDdl":false,"mysqlType":null,"old":null,"pkNames":null,"sql":"INSERT INTO mysql.rds_heartbeat2(id, value) values (1,1624790516970) ON DUPLICATE KEY UPDATE value = 1624790516970","sqlType":null,"table":"rds_heartbeat2","ts":1624790570243,"type":"INSERT"}
         |""".stripMargin
-    val res =  CanalParser().canal2Hudi(dmlStr)
+    val res = CanalParser().canal2Hudi(dmlStr)
     println(res)
   }
 

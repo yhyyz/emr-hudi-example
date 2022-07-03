@@ -22,7 +22,7 @@ object Log2Hudi {
     log.info(args.mkString)
     // Set log4j level to warn
     Logger.getLogger("org").setLevel(Level.WARN)
-//    System.setProperty("HADOOP_USER_NAME", "hadoop")
+    //    System.setProperty("HADOOP_USER_NAME", "hadoop")
     val parmas = Config.parseConfig(Log2Hudi, args)
     // init spark session
     val ss = SparkHelper.getSparkSession(parmas.env)
@@ -51,7 +51,7 @@ object Log2Hudi {
     val metaEventSample = ss.read.json(Seq(Meta.getMetaJsonFromSample(parmas.jsonMetaSample)).toDS())
     val metaEventSchema = metaEventSample.schema
     val msb = ss.sparkContext.broadcast(metaEventSchema)
-//    val parb = ss.sparkContext.broadcast((parmas.partitionNum, parmas.partitionFormat))
+    //    val parb = ss.sparkContext.broadcast((parmas.partitionNum, parmas.partitionFormat))
     // Kafka value
     val ds = df.selectExpr("CAST(value AS STRING)").as[String]
     val query = ds

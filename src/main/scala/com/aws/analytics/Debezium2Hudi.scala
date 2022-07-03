@@ -1,6 +1,6 @@
 package com.aws.analytics
 
-import com.aws.analytics.cdc.CanalParser
+import com.aws.analytics.cdc.{ DebeziumParser}
 import com.aws.analytics.cdc.const.HudiOP
 import com.aws.analytics.cdc.util.JsonUtil
 import com.aws.analytics.conf.{Config, TableInfo}
@@ -17,18 +17,18 @@ import scala.concurrent.duration.{Duration, MINUTES}
 import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor, Future}
 import java.time.format.DateTimeFormatter
 
-object Canal2Hudi {
+object Debezium2Hudi {
 
   case class TableInfoList(tableInfo: List[TableInfo])
 
-  private val log = LoggerFactory.getLogger("canal2hudi")
+  private val log = LoggerFactory.getLogger("debezium2hudi")
 
   def main(args: Array[String]): Unit = {
     log.info(args.mkString)
     // Set log4j level to warn
     Logger.getLogger("org").setLevel(Level.WARN)
     //    System.setProperty("HADOOP_USER_NAME", "hadoop")
-    val params = Config.parseConfig(Canal2Hudi, args)
+    val params = Config.parseConfig(Debezium2Hudi, args)
     val tableInfoList = JsonUtil.mapper.readValue(params.tableInfoJson, classOf[TableInfoList])
     // init spark session
     val ss = SparkHelper.getSparkSession(params.env)
@@ -68,12 +68,12 @@ object Canal2Hudi {
     val ds = df.selectExpr("CAST(value AS STRING)").as[String]
     val query = ds
       .writeStream
-      .queryName("canal2hudi")
+      .queryName("debezium2hudi")
       .option("checkpointLocation", params.checkpointDir)
       // if set 0, as fast as possible
       .trigger(Trigger.ProcessingTime(params.trigger + " seconds"))
       .foreachBatch { (batchDF: Dataset[String], batchId: Long) =>
-        val newsDF = batchDF.map(cdc => CanalParser.apply().canal2Hudi(cdc))
+        val newsDF = batchDF.map(cdc => DebeziumParser.apply().debezium2Hudi(cdc))
           .filter(_ != null)
         if (!newsDF.isEmpty) {
           val tasks = Seq[Future[Unit]]()
@@ -81,7 +81,7 @@ object Canal2Hudi {
             val insertORUpsertDF = newsDF
               .filter($"database" === tableInfo.database && $"table" === tableInfo.table)
               .filter($"operationType" === HudiOP.UPSERT || $"operationType" === HudiOP.INSERT)
-              .select(explode($"data").as("jsonData"))
+              .select($"data".as("jsonData"))
             if (!insertORUpsertDF.isEmpty) {
               val json_schema = ss.read.json(insertORUpsertDF.select("jsonData").as[String]).schema
               val cdcDF = insertORUpsertDF.select(from_json($"jsonData", json_schema).as("cdc_data"))

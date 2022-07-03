@@ -7,14 +7,14 @@ object Meta {
 
   private val log = LoggerFactory.getLogger("Meta")
 
-  def getMetaJsonFromSample(jsonSample:String):String= {
+  def getMetaJsonFromSample(jsonSample: String): String = {
     val gson = new Gson()
     try {
       gson.fromJson(jsonSample, classOf[Object])
       jsonSample
     } catch {
       case e: Exception => log.error(e.getMessage)
-       null
+        null
 
     }
   }

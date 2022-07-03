@@ -3,13 +3,14 @@ package com.aws.analytics.util
 import com.aws.analytics.conf.Config
 
 import scala.collection.mutable
+
 object HudiConfig {
 
-  def getEventConfig(params:Config): mutable.HashMap[String, String] = {
+  def getEventConfig(params: Config): mutable.HashMap[String, String] = {
     val props = new mutable.HashMap[String, String]
     if ("true".equalsIgnoreCase(params.syncHive)) {
       props.put("hoodie.datasource.hive_sync.enable", "true")
-    }else{
+    } else {
       props.put("hoodie.datasource.hive_sync.enable", "false")
     }
     params.tableType.toUpperCase() match {
@@ -22,7 +23,7 @@ object HudiConfig {
       case _ =>
         props.put("hoodie.datasource.write.table.type", "COPY_ON_WRITE")
     }
-    props.put("hoodie.table.name",params.syncTableName)
+    props.put("hoodie.table.name", params.syncTableName)
     props.put("hoodie.datasource.write.operation", params.hudiWriteOperation)
     props.put("hoodie.datasource.write.recordkey.field", params.hudiKeyField.split(",")(0))
     props.put("hoodie.datasource.write.precombine.field", params.hudiKeyField.split(",")(1))
@@ -39,7 +40,7 @@ object HudiConfig {
     props.put("hoodie.datasource.hive_sync.jdbcurl", params.syncJDBCUrl)
     props.put("hoodie.datasource.hive_sync.partition_extractor_class", "org.apache.hudi.hive.MultiPartKeysValueExtractor")
     props.put("hoodie.datasource.hive_sync.username", params.syncJDBCUsername)
-    props.put("hoodie.datasource.write.payload.class","org.apache.hudi.common.model.DefaultHoodieRecordPayload")
+    props.put("hoodie.datasource.write.payload.class", "org.apache.hudi.common.model.OverwriteWithLatestAvroPayload")
 
     props
 
