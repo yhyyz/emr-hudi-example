@@ -40,6 +40,7 @@ object Debezium2Hudi {
       .option("subscribe", params.sourceTopic)
       .option("startingOffsets", params.startPos)
       .option("failOnDataLoss", false)
+      .option("maxOffsetsPerTrigger",params.maxOffset.toLong)
       .option("kafka.consumer.commit.groupid", params.consumerGroup)
       .load()
       .repartition(Integer.valueOf(params.partitionNum))

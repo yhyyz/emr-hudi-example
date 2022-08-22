@@ -39,6 +39,7 @@ object Canal2Hudi {
       .option("kafka.bootstrap.servers", params.brokerList)
       .option("subscribe", params.sourceTopic)
       .option("startingOffsets", params.startPos)
+      .option("maxOffsetsPerTrigger",params.maxOffset.toLong)
       .option("failOnDataLoss", false)
       .option("kafka.consumer.commit.groupid", params.consumerGroup)
       .load()

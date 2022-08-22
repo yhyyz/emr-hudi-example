@@ -34,6 +34,7 @@ object Log2Hudi {
       .option("subscribe", parmas.sourceTopic)
       .option("startingOffsets", parmas.startPos)
       .option("failOnDataLoss", false)
+      .option("maxOffsetsPerTrigger",parmas.maxOffset.toLong)
       .option("kafka.consumer.commit.groupid", parmas.consumerGroup)
       .load()
       .repartition(Integer.valueOf(parmas.partitionNum))
