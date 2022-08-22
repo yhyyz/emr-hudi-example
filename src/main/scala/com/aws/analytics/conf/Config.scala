@@ -30,6 +30,7 @@ case class Config(
                    concurrent: String = "false",
                    syncMode:String="jdbc",
                    syncMetastore:String="thrift://localhost:9083",
+                   hudiConf:String="",
                  )
 
 
@@ -45,6 +46,8 @@ object Config {
       opt[String]('p', "consumeGroup").required().action((x, config) => config.copy(consumerGroup = x)).text("kafka consumer group")
       opt[String]('s', "syncHive").optional().action((x, config) => config.copy(syncHive = x)).text("whether sync hive，default:false")
       opt[String]('o', "startPos").optional().action((x, config) => config.copy(startPos = x)).text("kafka start pos latest or earliest,default latest")
+      opt[String]('x', "hudiConf").optional().action((x, config) => config.copy(hudiConf = x)).text("hudi conf,key1=value1,key2=value2,...")
+
       programName match {
         case "Canal2Hudi" =>
           opt[String]('m', "tableInfoJson").optional().action((x, config) => config.copy(tableInfoJson = x)).text("table info json str")

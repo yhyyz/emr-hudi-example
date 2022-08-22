@@ -11,7 +11,7 @@ object SparkHelper {
     env match {
       case "prod" => {
         val conf = new SparkConf()
-          .setAppName("Log2Hudi")
+//          .setAppName("Log2Hudi")
           .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
           .set("spark.sql.hive.metastore.version", "2.3.9-amzn-1")
           .set("spark.sql.cbo.enabled", "true")
@@ -28,7 +28,7 @@ object SparkHelper {
 
       case "dev" => {
         val conf = new SparkConf()
-          .setAppName("Log2Hudi DEV")
+//          .setAppName("Log2Hudi DEV")
           .setMaster("local[6]")
           .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
           .set("spark.sql.hive.metastore.version", "2.3.0")

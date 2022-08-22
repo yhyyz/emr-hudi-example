@@ -84,6 +84,34 @@ spark-submit  --master yarn \
 
 ```
 
+```shell
+# bucket index,  hudi 0.12.0 emr spark3.2.1
+# wget https://repo.maven.apache.org/maven2/org/apache/hudi/hudi-spark3-bundle_2.12/0.12.0/hudi-spark3-bundle_2.12-0.12.0.jar
+spark-submit  --master yarn \
+--deploy-mode client \
+--driver-memory 1g \
+--executor-memory 2g \
+--executor-cores 4 \
+--num-executors  10 \
+--conf "spark.dynamicAllocation.enabled=false" \
+--conf "spark.serializer=org.apache.spark.serializer.KryoSerializer" \
+--conf "spark.sql.hive.convertMetastoreParquet=false" \
+--jars  /home/hadoop/hudi-spark3.2-bundle_2.12-0.12.0.jar,/usr/lib/spark/external/lib/spark-avro.jar \
+--class com.aws.analytics.Debezium2Hudi /home/hadoop/emr-hudi-example-1.0-SNAPSHOT-jar-with-dependencies.jar \
+-e prod -b b-2.common-004.5ybaio.c3.kafka.ap-southeast-1.amazonaws.com:9092 \
+-t cdc_topic_001 -p emr-cdc-group-opti-06 -s true \
+-o latest \
+-i 60 -y cow -p 40 \
+-c s3://app-util/spark-checkpoint/emr-hudi-cdc-opti-006/ \
+-g s3://app-util/emr-hudi-cdc-opti-006/ \
+-r jdbc:hive2://localhost:10000  \
+-n hadoop -w upsert  \
+-s hms \
+--concurrent true \
+-m "{\"tableInfo\":[{\"database\":\"cdc_test_db\",\"table\":\"test_tb_01\",\"recordKey\":\"id\",\"precombineKey\":\"modify_time\",\"partitionTimeColumn\":\"create_time\",\"hudiPartitionField\":\"year_month\"}]}" \
+-x hoodie.upsert.shuffle.parallelism=40,hoodie.insert.shuffle.parallelism=40,hoodie.keep.min.commits=5,hoodie.keep.max.commits=6,hoodie.parquet.small.file.limit=0,hoodie.storage.layout.partitioner.class=org.apache.hudi.table.action.commit.SparkBucketIndexPartitioner,hoodie.index.type=BUCKET,hoodie.datasource.write.payload.class=org.apache.hudi.common.model.DefaultHoodieRecordPayload
+```
+
 
 #### 二、Canal2Hudi 
 

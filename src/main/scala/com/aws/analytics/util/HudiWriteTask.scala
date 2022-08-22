@@ -17,7 +17,7 @@ object HudiWriteTask {
     df.write.format("org.apache.hudi")
       .options(props)
       //.option(HoodieIndexConfig.BLOOM_INDEX_UPDATE_PARTITION_PATH, "true")
-      .option(HoodieIndexConfig.INDEX_TYPE_PROP, HoodieIndex.IndexType.BLOOM.name())
+//      .option(HoodieIndexConfig.INDEX_TYPE_PROP, HoodieIndex.IndexType.BLOOM.name())
       .mode(SaveMode.Append)
       .save(params.hudiEventBasePath + tableInfo.database + "/" + tableInfo.table + "/")
   }
@@ -28,7 +28,7 @@ object HudiWriteTask {
     df.write.format("org.apache.hudi")
       .options(props)
       //      .option(HoodieIndexConfig.BLOOM_INDEX_UPDATE_PARTITION_PATH, "true")
-      .option(HoodieIndexConfig.INDEX_TYPE_PROP, HoodieIndex.IndexType.BLOOM.name())
+//      .option(HoodieIndexConfig.INDEX_TYPE_PROP, HoodieIndex.IndexType.BLOOM.name())
       .mode(SaveMode.Append)
       .save(params.hudiEventBasePath + tableInfo.database + "/" + tableInfo.table + "/")
   }
@@ -73,6 +73,13 @@ object HudiWriteTask {
     props.put("hoodie.datasource.hive_sync.partition_extractor_class", "org.apache.hudi.hive.MultiPartKeysValueExtractor")
     props.put("hoodie.datasource.hive_sync.username", params.syncJDBCUsername)
     props.put("hoodie.datasource.write.payload.class", "org.apache.hudi.common.model.DefaultHoodieRecordPayload")
+    if (!"".equalsIgnoreCase(params.hudiConf)){
+     val  kvArray = params.hudiConf.split(",")
+      for(kv <- kvArray){
+        val tmp = kv.split("=")
+        props.put(tmp(0),tmp(1))
+      }
+    }
     props
   }
 
