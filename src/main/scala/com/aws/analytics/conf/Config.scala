@@ -31,7 +31,7 @@ case class Config(
                    syncMode:String="jdbc",
                    syncMetastore:String="thrift://localhost:9083",
                    hudiConf:String="",
-                   maxOffset:String="",
+                   maxOffset:String="100000000",
                  )
 
 
@@ -48,7 +48,7 @@ object Config {
       opt[String]('s', "syncHive").optional().action((x, config) => config.copy(syncHive = x)).text("whether sync hive，default:false")
       opt[String]('o', "startPos").optional().action((x, config) => config.copy(startPos = x)).text("kafka start pos latest or earliest,default latest")
       opt[String]('x', "hudiConf").optional().action((x, config) => config.copy(hudiConf = x)).text("hudi conf,key1=value1,key2=value2,...")
-      opt[String]('k', "maxOffset").optional().action((x, config) => config.copy(maxOffset = x)).text("kafka max offset")
+      opt[String]('k', "maxOffset").optional().action((x, config) => config.copy(maxOffset = x)).text("kafka max offset, default 100000000")
 
 
       programName match {
