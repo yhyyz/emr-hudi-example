@@ -1,4 +1,35 @@
-[toc]
+#### marker file issue
+* EMR 6.7.0 
+
+```shell
+spark-submit  --master yarn \
+--jars  /usr/lib/hudi/hudi-spark-bundle.jar \
+--name marker-error \
+--deploy-mode cluster \
+--driver-memory 6g \
+--executor-memory 4g \
+--executor-cores 4 \
+--num-executors  20 \
+--conf spark.dynamicAllocation.enabled=false \
+--conf spark.serializer=org.apache.spark.serializer.KryoSerializer \
+--conf spark.sql.extensions=org.apache.spark.sql.hudi.HoodieSparkSessionExtension \
+--conf spark.sql.parquet.binaryAsString=true \
+--class com.aws.analytics.Debezium2HudiOptimize /home/hadoop/emr-hudi-example-1.0-SNAPSHOT-jar-with-dependencies.jar \
+-e prod -b b-3.xxxxx.0a26bt.c3.kafka.ap-southeast-1.amazonaws.com:9092 \
+-t cdc_topic_007 -p marker-error-g1 -s false \
+-o earliest \
+-i 60 -y mor -p 20 \
+-c s3://app-util/spark-checkpoint/marker-error-100/ \
+-g s3://app-util/hudi-bloom/marker-error-100/ \
+-r jdbc:hive2://localhost:10000  \
+-n hadoop -w upsert  \
+-s hms \
+--concurrent true \
+-m "{\"tableInfo\":[{\"database\":\"cdc_test_db\",\"table\":\"dhdata_01\",\"recordKey\":\"prod_attr_val_id\",\"precombineKey\":\"modify_time\",\"partitionTimeColumn\":\"create_time\",\"hudiPartitionField\":\"year_month\"},{\"database\":\"cdc_test_db\",\"table\":\"dhdata_02\",\"recordKey\":\"prod_attr_val_id\",\"precombineKey\":\"modify_time\",\"partitionTimeColumn\":\"create_time\",\"hudiPartitionField\":\"year_month\"},{\"database\":\"cdc_test_db\",\"table\":\"dhdata_03\",\"recordKey\":\"prod_attr_val_id\",\"precombineKey\":\"modify_time\",\"partitionTimeColumn\":\"create_time\",\"hudiPartitionField\":\"year_month\"},{\"database\":\"cdc_test_db\",\"table\":\"dhdata_04\",\"recordKey\":\"prod_attr_val_id\",\"precombineKey\":\"modify_time\",\"partitionTimeColumn\":\"create_time\",\"hudiPartitionField\":\"year_month\"},{\"database\":\"cdc_test_db\",\"table\":\"dhdata_05\",\"recordKey\":\"prod_attr_val_id\",\"precombineKey\":\"modify_time\",\"partitionTimeColumn\":\"create_time\",\"hudiPartitionField\":\"year_month\"},{\"database\":\"cdc_test_db\",\"table\":\"dhdata_06\",\"recordKey\":\"prod_attr_val_id\",\"precombineKey\":\"modify_time\",\"partitionTimeColumn\":\"create_time\",\"hudiPartitionField\":\"year_month\"},{\"database\":\"cdc_test_db\",\"table\":\"dhdata_07\",\"recordKey\":\"prod_attr_val_id\",\"precombineKey\":\"modify_time\",\"partitionTimeColumn\":\"create_time\",\"hudiPartitionField\":\"year_month\"},{\"database\":\"cdc_test_db\",\"table\":\"dhdata_08\",\"recordKey\":\"prod_attr_val_id\",\"precombineKey\":\"modify_time\",\"partitionTimeColumn\":\"create_time\",\"hudiPartitionField\":\"year_month\"},{\"database\":\"cdc_test_db\",\"table\":\"dhdata_09\",\"recordKey\":\"prod_attr_val_id\",\"precombineKey\":\"modify_time\",\"partitionTimeColumn\":\"create_time\",\"hudiPartitionField\":\"year_month\"},{\"database\":\"cdc_test_db\",\"table\":\"dhdata_10\",\"recordKey\":\"prod_attr_val_id\",\"precombineKey\":\"modify_time\",\"partitionTimeColumn\":\"create_time\",\"hudiPartitionField\":\"year_month\"},{\"database\":\"cdc_test_db\",\"table\":\"dhdata_11\",\"recordKey\":\"prod_attr_val_id\",\"precombineKey\":\"modify_time\",\"partitionTimeColumn\":\"create_time\",\"hudiPartitionField\":\"year_month\"},{\"database\":\"cdc_test_db\",\"table\":\"dhdata_12\",\"recordKey\":\"prod_attr_val_id\",\"precombineKey\":\"modify_time\",\"partitionTimeColumn\":\"create_time\",\"hudiPartitionField\":\"year_month\"},{\"database\":\"cdc_test_db\",\"table\":\"dhdata_13\",\"recordKey\":\"prod_attr_val_id\",\"precombineKey\":\"modify_time\",\"partitionTimeColumn\":\"create_time\",\"hudiPartitionField\":\"year_month\"},{\"database\":\"cdc_test_db\",\"table\":\"dhdata_14\",\"recordKey\":\"prod_attr_val_id\",\"precombineKey\":\"modify_time\",\"partitionTimeColumn\":\"create_time\",\"hudiPartitionField\":\"year_month\"},
+{\"database\":\"cdc_test_db\",\"table\":\"dhdata_15\",\"recordKey\":\"prod_attr_val_id\",\"precombineKey\":\"modify_time\",\"partitionTimeColumn\":\"create_time\",\"hudiPartitionField\":\"year_month\"}]}" \
+-k 2000000 \
+-x hoodie.upsert.shuffle.parallelism=20,hoodie.insert.shuffle.parallelism=20,hoodie.keep.min.commits=6,hoodie.keep.max.commits=7,hoodie.parquet.small.file.limit=0,hoodie.index.type=GLOBAL_BLOOM,hoodie.datasource.write.payload.class=org.apache.hudi.common.model.DefaultHoodieRecordPayload,hoodie.datasource.write.keygenerator.class=org.apache.hudi.keygen.NonpartitionedKeyGenerator,hoodie.metadata.enable=false,hoodie.metadata.enable=false,hoodie.cleaner.commits.retained=5,hoodie.compact.inline=false,hoodie.compact.inline.max.delta.commits=4,hoodie.compact.schedule.inline=true \
+```
 
 #### 更新版本EMR-6.6.0 (spark=3.2.0 hudi=0.10.1) [2022-07-03]
 
