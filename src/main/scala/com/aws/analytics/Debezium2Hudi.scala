@@ -56,8 +56,8 @@ object Debezium2Hudi {
     val listener = new KafkaOffsetCommitterListener()
     ss.streams.addListener(listener)
 
-    val pool = Executors.newFixedThreadPool(50)
-    implicit val xc: ExecutionContextExecutor = ExecutionContext.fromExecutor(pool)
+//    val pool = Executors.newFixedThreadPool(50)
+//    implicit val xc: ExecutionContextExecutor = ExecutionContext.fromExecutor(pool)
 
     val partitionFormat: (String => String) = (arg: String) => {
       val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
@@ -74,6 +74,10 @@ object Debezium2Hudi {
       // if set 0, as fast as possible
       .trigger(Trigger.ProcessingTime(params.trigger + " seconds"))
       .foreachBatch { (batchDF: Dataset[String], batchId: Long) =>
+        log.warn("current batch: "+batchId.toString)
+        val pool = Executors.newFixedThreadPool(50)
+        implicit val xc: ExecutionContextExecutor = ExecutionContext.fromExecutor(pool)
+
         val newsDF = batchDF.map(cdc => DebeziumParser.apply().debezium2Hudi(cdc))
           .filter(_ != null)
         if (!newsDF.isEmpty) {
@@ -99,7 +103,8 @@ object Debezium2Hudi {
           }
           if (params.concurrent == "true" && tasks.nonEmpty) {
             Await.result(Future.sequence(tasks), Duration(60, MINUTES))
-            ()
+            pool.shutdown()
+//            ()
           }
 
         }

@@ -4,15 +4,18 @@ import com.aws.analytics.conf.{Config, TableInfo}
 import org.apache.hudi.config.HoodieIndexConfig
 import org.apache.hudi.index.HoodieIndex
 import org.apache.spark.sql.{DataFrame, Dataset, SaveMode, SparkSession}
+import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
-
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 object HudiWriteTask {
+  private val log = LoggerFactory.getLogger("HudiWriteTask")
 
 
   def run(df: DataFrame, params: Config, tableInfo: TableInfo)(implicit xc: ExecutionContext): Future[Unit] = Future {
+    log.warn("current thread name: "+ Thread.currentThread().getName +" current thread id: "+ Thread.currentThread().getId.toString +" table name: "+tableInfo.table)
+
     val props = setHudiConfig(params, tableInfo)
     df.write.format("org.apache.hudi")
       .options(props)
@@ -62,8 +65,6 @@ object HudiWriteTask {
     props.put("hoodie.cleaner.commits.retained", "2")
     props.put("hoodie.keep.min.commits", "5")
     props.put("hoodie.keep.max.commits", "6")
-    props.put("hoodie.insert.shuffle.parallelism", "1")
-    props.put("hoodie.upsert.shuffle.parallelism", "1")
     props.put("hoodie.datasource.hive_sync.database", tableInfo.database)
     props.put("hoodie.datasource.hive_sync.table", tableInfo.table)
     props.put("hoodie.datasource.hive_sync.mode", params.syncMode)
