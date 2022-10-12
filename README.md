@@ -14,7 +14,7 @@ spark-submit  --master yarn \
 --conf spark.serializer=org.apache.spark.serializer.KryoSerializer \
 --conf spark.sql.extensions=org.apache.spark.sql.hudi.HoodieSparkSessionExtension \
 --conf spark.sql.parquet.binaryAsString=true \
---class com.aws.analytics.Debezium2HudiOptimize /home/hadoop/emr-hudi-example-1.0-SNAPSHOT-jar-with-dependencies.jar \
+--class com.aws.analytics.Debezium2Hudi /home/hadoop/emr-hudi-example-1.0-SNAPSHOT-jar-with-dependencies.jar \
 -e prod -b b-3.xxxxx.0a26bt.c3.kafka.ap-southeast-1.amazonaws.com:9092 \
 -t cdc_topic_007 -p marker-error-g1 -s false \
 -o earliest \
